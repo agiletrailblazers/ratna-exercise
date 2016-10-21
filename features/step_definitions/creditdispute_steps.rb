@@ -533,7 +533,7 @@ Then(/^the first answer is still selected$/) do
 end
 
 Then(/^the user sees the case note in the case note history$/) do
-  caseNoteHistoryRowOne = $wait.until { $driver.find_element(:xpath, "//div[@name='caseNoteHistoryGrid']//tr[@data-row-id='0']") }
+  caseNoteHistoryRowOne = $wait.until { $driver.find_element(:xpath, "//div[@name='caseNoteHistoryPanel']//tr[@data-row-id='0']") }
   $wait.until { caseNoteHistoryRowOne.displayed? }
   expect(caseNoteHistoryRowOne.text).to include($testString);
 end
