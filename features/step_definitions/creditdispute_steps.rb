@@ -180,7 +180,7 @@ end
 
 Then(/^the application is marked as done$/) do
   # get the list of rows
-  sleep(1)
+  sleep(1);
   applicationRows = $wait.until { $driver.find_elements(:xpath => "//div[@name='appRow']") }
   # get the specific row whose doneness is being checked
   $wait.until { applicationRows[$donenessCriteriaRowIndex].find_element(:name, 'checkMarkDoneIcon') }
@@ -200,8 +200,7 @@ And(/^the application note count is 1$/) do
   $wait.until { applicationRow.displayed? }
   # get the specific row whose note count is being checked
   noteCount = applicationRow.find_element(:name, 'noteCountLabel')
-
-  expect(noteCount.text()).to eq("1")
+  expect(noteCount.text()).to include("1")
 end
 
 And(/^the user clicks the save for later button$/) do
@@ -358,8 +357,7 @@ Then(/^an incomplete checklist close error is displayed$/) do
 end
 
 Then(/^the user sees a case note save success$/) do
-  $wait.until { $driver.find_element(:xpath, "//div[@id='toast-container']//div[@class='ng-binding ng-scope'][text()= 'Case note has been saved successfully']" ).displayed? }
-  $driver.find_element(:xpath, "//div[@id='toast-container']//div[@class='ng-binding ng-scope']").click()
+  $wait.until { $driver.find_element(:xpath, "//div[@id='toast-container']//div[@class='ng-binding ng-scope'][text()= 'Case note has been saved successfully']" )}.click()
 end
 
 Then(/^the user sees the update case number success$/) do
@@ -535,7 +533,7 @@ Then(/^the first answer is still selected$/) do
 end
 
 Then(/^the user sees the case note in the case note history$/) do
-  caseNoteHistoryRowOne = $wait.until { $driver.find_element(:xpath, "//div[@name='CaseHistoryGrid']//tr[@data-row-id='0']") }
+  caseNoteHistoryRowOne = $wait.until { $driver.find_element(:xpath, "//div[@name='caseNoteHistoryGrid']//tr[@data-row-id='0']") }
   $wait.until { caseNoteHistoryRowOne.displayed? }
   expect(caseNoteHistoryRowOne.text).to include($testString);
 end
@@ -632,8 +630,8 @@ Then(/^the user sees the specialty group checklist$/) do
   #wait until the rows show up
 
   # verify the row labels labels are not visible
-  appLabel = $wait.until { $driver.find_element(:xpath => "//div[@name='specialtyGroupTab']//label[@name='AppName']") }
-  expect(appLabel.displayed?).to eq(false);
+  appLabel = $wait.until { $driver.find_element(:xpath => "//div[@name='specialtyGroupTab']//label[@name='checklistGroupName']") }
+  expect(appLabel.displayed?).to eq(true);
 
   # verify row is in a clean state - the image count is 0
   imageCount = $wait.until { $driver.find_element(:xpath => "//div[@name='specialtyGroupTab']//label[@name='ImageCount']") }
@@ -656,7 +654,7 @@ Then(/^the user sees an add row successfully added$/) do
   expect(alertToaster.text).to include("Row added successfully.");
   alertToaster.click();
 
-  appLabels = $wait.until { $driver.find_elements(:xpath => "//div[@name='specialtyGroupTab']//label[@name='AppName']") }
+  appLabels = $wait.until { $driver.find_elements(:xpath => "//div[@name='specialtyGroupTab']//label[@name='checklistGroupName']") }
   specialtyRows = $wait.until { $driver.find_elements(:xpath => "//div[@name='specialtyGroupTab']//div[@name='appRow']") }
   expect(specialtyRows.size). to equal(2);
 end
