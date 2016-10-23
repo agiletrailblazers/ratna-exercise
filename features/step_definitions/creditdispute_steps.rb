@@ -3,7 +3,7 @@ require 'securerandom'
 
 $driver
 $wait
-$testString = 'This is an automated test note.'
+$testString = 'This is aautomated test note.'
 $testTransferReasonString = 'This is an automated test transfer summary'
 
 $testChecklistCaseNumber
@@ -194,7 +194,7 @@ Then(/^the application is marked as not done$/) do
 end
 
 And(/^the application note count is 1$/) do
-  sleep(1) #Try commenting out, replaced by displayed?
+  sleep(10) #Try commenting out, replaced by displayed?
   # get the relevant application rows
   applicationRow = $driver.find_elements(:xpath => "//div[@name='appRow']")[$donenessCriteriaRowIndex]
   $wait.until { applicationRow.displayed? }
@@ -321,22 +321,19 @@ When(/^the user marks all rows as not Applicable$/) do
   rowCount = toggles.count
 
   for i in 0..(rowCount - 1) do
-    rowToToggle = toggles[i]
-    rowToToggle.click();
-    # the data that drives the state of each row needs to refresh after each row is updated,
-    # re-find the elements so that we have the dom with the updated state(i.e. state)
-    toggles = $wait.until { $driver.find_elements(:xpath => "//div[@name='cardCbdTab']//input[@name='appNotApplicableToggle']") }
+  rowToToggle = toggles[i]
+  rowToToggle.click();
+  #if we see a toggle modal, cancel it and continue
+  if is_element_present(:name, "toggleConfirmMessageRow")
+  $driver.find_element(:name, "toggleConfirmCancelButton").click();
   end
 end
-
-And(/^the user clicks the transfer button$/) do
-  transferButton = $wait.until { $driver.find_element(:name, "transferButton") }
-  transferButton.click();
 end
 
 Then(/^the user sees the transfer form$/) do
-  transferForm = $wait.until { $driver.find_element(:name, 'transferReason') }
-  $wait.until {transferForm.displayed?}
+  sleep(10)
+  $wait.until { $driver.find_element(:name, 'transferReason_formWidget').displayed? }
+  transferForm = $wait.until { $driver.find_element(:name, 'transferReason_formWidget') }
   expect(transferForm.displayed?).to be true
 end
 
@@ -357,7 +354,8 @@ Then(/^an incomplete checklist close error is displayed$/) do
 end
 
 Then(/^the user sees a case note save success$/) do
-  $wait.until { $driver.find_element(:xpath, "//div[@id='toast-container']//div[@class='ng-binding ng-scope'][text()= 'Case note has been saved successfully']" )}.click()
+  sleep(1)
+$wait.until { $driver.find_element(:xpath, "//div[@id='toast-container']//div[@class='ng-binding ng-scope'][text()= 'Case note has been saved successfully']" )}.click()
 end
 
 Then(/^the user sees the update case number success$/) do
@@ -365,6 +363,10 @@ Then(/^the user sees the update case number success$/) do
   $driver.find_element(:xpath, "//div[@id='toast-container']//div[@class='ng-binding ng-scope']").click()
 end
 
+When(/^the user clicks the transfer button$/) do
+ transferButton = $wait.until { $driver.find_element(:name, "transferButton") }
+ transferButton.click();
+end
 
 Then(/^an incomplete checklist transfer error is displayed$/) do
   # Get the toast-container and then find the div which holds the message within the container.
@@ -405,7 +407,8 @@ Then(/^the user sees the application note in the note History$/) do
 end
 
 When(/^the user adds a note to a row that requires a note only$/) do
-  applicationRows = $wait.until { $driver.find_elements(:xpath => "//div[@name='appRow']") }
+  applicationRows = $wait.until { $driver.find_elements(:xpath => "//div[@name='appThirdRow']") }
+
   index = 0
 
   begin
@@ -415,19 +418,26 @@ When(/^the user adds a note to a row that requires a note only$/) do
     applicationRows.each do |applicationRow|
       # the data that drives the state of each row needs to refresh after each row is updated,
       # re-find the elements so that we have the dom with the updated state(i.e. state)
-      imageRequiredLabel = applicationRow.find_element(:name, 'imageRequiredAsteriskLabel')
-      noteRequiredLabel = applicationRow.find_element(:name, 'notesRequiredAsteriskLabel')
 
-      if((imageRequiredLabel.text != '*')&&(noteRequiredLabel.text == '*'))
+
+      if((applicationRow.text.include? "Images")&&(applicationRow.text.include? "*Notes" ))
         $donenessCriteriaRow = applicationRow
         $donenessCriteriaRowIndex = index
         break
       end
       index += 1
     end
+    caseAppNotes = $wait.until { $driver.find_elements(:xpath => "//textarea[@name='caseAppNote']") }
+    caseIndex =0;
+    caseAppNotes.each do |caseAppNote|
+      if ($donenessCriteriaRowIndex == caseIndex)
+        caseAppNote.send_keys('this is an automated test note')
+        break
+      end
+      caseIndex += 1
 
-    noteField = $donenessCriteriaRow.find_element(:name, 'caseAppNote')
-    noteField.send_keys('this is an automated test note')
+    end
+
   ensure
     # restore the origin implicit wait
     $driver.manage.timeouts.implicit_wait = $waitTimeout
@@ -436,7 +446,7 @@ When(/^the user adds a note to a row that requires a note only$/) do
 end
 
 When(/^the user adds a note to a row that requires an image only$/) do
-  applicationRows = $wait.until { $driver.find_elements(:xpath => "//div[@name='appRow']") }
+  applicationRows = $wait.until { $driver.find_elements(:xpath => "//div[@name='appThirdRow']") }
   index = 0
 
   begin
@@ -446,19 +456,23 @@ When(/^the user adds a note to a row that requires an image only$/) do
     applicationRows.each do |applicationRow|
       # the data that drives the state of each row needs to refresh after each row is updated,
       # re-find the elements so that we have the dom with the updated state(i.e. state)
-      imageRequiredLabel = applicationRow.find_element(:name, 'imageRequiredAsteriskLabel')
-      noteRequiredLabel = applicationRow.find_element(:name, 'notesRequiredAsteriskLabel')
-
-      if((imageRequiredLabel.text == '*')&&(noteRequiredLabel.text != '*'))
-        $donenessCriteriaRow = applicationRow
-        $donenessCriteriaRowIndex = index
-        break
-      end
+            if((applicationRow.text.include? "*Images")&&(applicationRow.text.include? "Notes" ))
+              $donenessCriteriaRow = applicationRow
+              $donenessCriteriaRowIndex = index
+              break
+            end
       index += 1
     end
+    caseAppNotes = $wait.until { $driver.find_elements(:xpath => "//textarea[@name='caseAppNote']") }
+    caseIndex =0;
+    caseAppNotes.each do |caseAppNote|
+      if ($donenessCriteriaRowIndex == caseIndex)
+        caseAppNote.send_keys('this is an automated test note')
+        break
+      end
+      caseIndex += 1
 
-    noteField = $donenessCriteriaRow.find_element(:name, 'caseAppNote')
-    noteField.send_keys('this is an automated test note')
+    end
   ensure
     # restore the origin implicit wait
     $driver.manage.timeouts.implicit_wait = $waitTimeout
@@ -551,6 +565,7 @@ end
 When(/^the user edits the case number/) do
   editIdField = $wait.until { $driver.find_element(:name, "newCaseNumber_formWidget") }
   $uuid = SecureRandom.uuid;
+  editIdField.clear()
   $testChecklistCaseNumberEdited = "new-case-id-" + $uuid;
   editIdField.send_keys($testChecklistCaseNumberEdited)
 end
@@ -595,11 +610,13 @@ end
 
 When(/^the user changes the case number to a duplicate$/) do
   editIdField = $wait.until { $driver.find_element(:name, "newCaseNumber_formWidget") }
+  editIdField.clear()
   editIdField.send_keys($testChecklistCaseNumber)
 end
 
 When(/^the user changes the case number to the same case number$/) do
   editIdField = $wait.until { $driver.find_element(:name, "newCaseNumber_formWidget") }
+  editIdField.clear()
   editIdField.send_keys($testChecklistCaseNumber)
 end
 
@@ -669,11 +686,18 @@ When(/^the user adds a note to each specialty row and each row is marked done$/)
     noteField = specialtyRow.find_element(:name, 'caseAppNote')
     noteField.send_keys('this is an automated test note')
     caseNumber.click(); #Lose Focus
-    $wait.until { $driver.find_element(:xpath, "//div[@id='toast-container']//div[@class='ng-binding ng-scope'][text()= 'Application note has been saved successfully']" ).displayed? }
-    $wait.until { $driver.find_element(:xpath, "//div[@id='toast-container']//div[@class='ng-binding ng-scope']" ) }.click();
-    # the data that drives the state of each row needs to refresh after each row is updated,
-    # re-find the elements so that we have the dom with the updated state(i.e. state)
-    specialtyRows = $wait.until { $driver.find_elements(:xpath => "//div[@name='specialtyGroupTab']//div[@name='appRow']") }
-    expect(specialtyRows[i]).to be_truthy
   end
+end
+
+def is_element_present(how, what)
+$driver.manage.timeouts.implicit_wait = 0
+begin
+result = $driver.find_elements(how, what).size() > 0
+if result
+result = $driver.find_element(how, what).displayed?
+end
+ensure
+$driver.manage.timeouts.implicit_wait = $waitTimeout
+end
+return result
 end
